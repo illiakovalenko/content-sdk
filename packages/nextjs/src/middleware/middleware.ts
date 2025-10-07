@@ -1,6 +1,6 @@
 ﻿import { SITE_KEY, SiteInfo, SiteResolver } from '@sitecore-content-sdk/core/site';
 import { debug, GraphQLRequestClientFactory } from '@sitecore-content-sdk/core';
-import { NextRequest, NextFetchEvent, NextResponse } from 'next/server';
+import * as nextServer from 'next/server';
 import {
   createGraphQLClientFactory,
   GraphQLClientOptions,
@@ -15,7 +15,7 @@ export type MiddlewareBaseConfig = {
    * @param {NextRequest} req request object from middleware handler
    * @param {NextResponse} res response object from middleware handler
    */
-  skip?: (req: NextRequest, res: NextResponse) => boolean;
+  skip?: (req: nextServer.NextRequest, res: nextServer.NextResponse) => boolean;
   /**
    * Fallback hostname in case `host` header is not present
    * @default localhost
@@ -42,7 +42,11 @@ export abstract class Middleware {
    * @param {NextResponse} res response
    * @param {NextFetchEvent} ev fetch event
    */
-  abstract handle(req: NextRequest, res: NextResponse, ev: NextFetchEvent): Promise<NextResponse>;
+  abstract handle(
+    req: nextServer.NextRequest,
+    res: nextServer.NextResponse,
+    ev: nextServer.NextFetchEvent
+  ): Promise<nextServer.NextResponse>;
 }
 
 /**
@@ -63,7 +67,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextRequest} req request
    * @returns {boolean} is preview
    */
-  protected isPreview(req: NextRequest) {
+  protected isPreview(req: nextServer.NextRequest) {
     return !!(
       req.cookies.get('__prerender_bypass')?.value || req.cookies.get('__next_preview_data')?.value
     );
@@ -74,7 +78,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextResponse} res response
    * @returns {boolean} true if app router is used
    */
-  protected isAppRouter(res: NextResponse): boolean {
+  protected isAppRouter(res: nextServer.NextResponse): boolean {
     return !!this.getLanguageFromHeader(res);
   }
 
@@ -83,7 +87,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextRequest} req request
    * @returns {boolean} is prefetch
    */
-  protected isPrefetch(req: NextRequest): boolean {
+  protected isPrefetch(req: nextServer.NextRequest): boolean {
     const isMobile = req.headers.get('sec-ch-ua-mobile') === '?1';
     const userAgent = req.headers.get('user-agent') || '';
     const isKnownPlatform = /iPhone|Mac|Linux|Windows|Android/i.test(userAgent);
@@ -102,7 +106,7 @@ export abstract class MiddlewareBase extends Middleware {
     // Otherwise, standard prefetch detection
     return purpose === 'prefetch' || nextRouterPrefetch === '1' || middlewarePrefetch === '1';
   }
-  protected disabled(req: NextRequest, res: NextResponse) {
+  protected disabled(req: nextServer.NextRequest, res: nextServer.NextResponse) {
     const { pathname } = req.nextUrl;
 
     return (
@@ -131,7 +135,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextResponse} res response
    * @returns {string} language
    */
-  protected getLanguage(req: NextRequest, res?: NextResponse): string {
+  protected getLanguage(req: nextServer.NextRequest, res?: nextServer.NextResponse): string {
     return (
       this.getLanguageFromHeader(res) ||
       req.nextUrl.locale ||
@@ -147,7 +151,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextResponse} res response
    * @returns {string | undefined} language or undefined if not found
    */
-  protected getLanguageFromHeader(res?: NextResponse): string | undefined {
+  protected getLanguageFromHeader(res?: nextServer.NextResponse): string | undefined {
     return res?.headers.get(LOCALE_HEADER_NAME) ?? undefined;
   }
 
@@ -155,7 +159,7 @@ export abstract class MiddlewareBase extends Middleware {
    * Extract 'host' header
    * @param {NextRequest} req request
    */
-  protected getHostHeader(req: NextRequest) {
+  protected getHostHeader(req: nextServer.NextRequest) {
     return req.headers.get('host')?.split(':')[0];
   }
 
@@ -167,7 +171,7 @@ export abstract class MiddlewareBase extends Middleware {
    * @param {NextResponse} [res] response
    * @returns {SiteInfo} site information
    */
-  protected getSite(req: NextRequest, res?: NextResponse): SiteInfo {
+  protected getSite(req: nextServer.NextRequest, res?: nextServer.NextResponse): SiteInfo {
     const siteNameCookie = res?.cookies.get(SITE_KEY)?.value;
     const hostname = this.getHostHeader(req) || this.defaultHostname;
 
@@ -200,14 +204,14 @@ export abstract class MiddlewareBase extends Middleware {
    */
   protected rewrite(
     rewritePath: string,
-    req: NextRequest,
-    res: NextResponse,
+    req: nextServer.NextRequest,
+    res: nextServer.NextResponse,
     skipHeader?: boolean
-  ): NextResponse {
+  ): nextServer.NextResponse {
     // Note an absolute URL is required: https://nextjs.org/docs/messages/middleware-relative-urls
     const rewriteUrl = req.nextUrl.clone();
     rewriteUrl.pathname = rewritePath;
-    const response = NextResponse.rewrite(rewriteUrl, res);
+    const response = nextServer.NextResponse.rewrite(rewriteUrl, res);
 
     // Share rewrite path with following executed middlewares
     if (!skipHeader) {
@@ -230,8 +234,13 @@ export const defineMiddleware = (...middlewares: Middleware[]) => {
      * @param {NextFetchEvent} ev fetch event
      * @param {NextResponse} [res] response
      */
-    exec: async (req: NextRequest, ev: NextFetchEvent, res?: NextResponse) => {
-      const response = res || NextResponse.next();
+    exec: async (
+      req: nextServer.NextRequest,
+      ev: nextServer.NextFetchEvent,
+      res?: nextServer.NextResponse
+    ) => {
+      console.log('nextSERVER:', nextServer);
+      const response = res || nextServer.NextResponse.next();
 
       debug.common('middleware start');
 
