@@ -18,6 +18,8 @@ import ErrorBoundary from '../ErrorBoundary';
  * @returns {React.ReactNode | React.ReactElement[]} rendered component(s)
  */
 export const ServerPlaceholder = (props: PlaceholderProps) => {
+  console.log('I am testing packages, server placeholder');
+
   if (!props.componentMap) {
     throw new Error('Component map is required for ServerPlaceholder');
   }

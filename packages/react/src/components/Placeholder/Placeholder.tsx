@@ -35,6 +35,8 @@ export class PlaceholderComponent extends React.Component<PlaceholderProps> {
   ) => {
     const { name, missingComponentComponent, hiddenRenderingComponent } = props;
 
+    console.log('I am testing packages, client placeholder');
+
     const transformedComponents = placeholderRenderings
       .map((componentRendering: ComponentRendering, index: number) => {
         const key = componentRendering.uid || `component-${index}`;
