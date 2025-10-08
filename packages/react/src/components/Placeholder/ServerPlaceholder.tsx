@@ -9,6 +9,7 @@ import React from 'react';
 import { PlaceholderMetadata } from './PlaceholderMetadata';
 import { ComponentRendering } from '@sitecore-content-sdk/core/layout';
 import ErrorBoundary from '../ErrorBoundary';
+import { PersonalizedWrapper } from './PersonalizedWrapper';
 
 /**
  * React Server Component implementation for Placeholder.
@@ -75,6 +76,12 @@ export const ServerPlaceholder = (props: PlaceholderProps) => {
             {rendered}
           </ErrorBoundary>
         );
+      }
+
+      if ((rendering as any).experiences) {
+        rendered = <PersonalizedWrapper rendering={rendering}>{rendered}</PersonalizedWrapper>;
+      } else {
+        console.log('NOT PERSONALIZED', rendering);
       }
 
       // if in edit mode then emit shallow chromes for hydration in Pages
